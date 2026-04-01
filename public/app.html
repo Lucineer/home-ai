@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HomeLog — Your House Brain</title>
+<style>
+  :root {
+    --bg: #F5F0EB;
+    --bg-card: #FFFFFF;
+    --bg-dark: #1a1a1a;
+    --fg: #2D2A26;
+    --fg-muted: #6B6560;
+    --fg-light: #9C9590;
+    --accent: #166534;
+    --accent-light: #DCFCE7;
+    --accent-hover: #14532D;
+    --warning: #D97706;
+    --warning-light: #FEF3C7;
+    --danger: #DC2626;
+    --danger-light: #FEE2E2;
+    --info: #2563EB;
+    --info-light: #DBEAFE;
+    --border: #E5E0DB;
+    --border-light: #EDEBE8;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--fg); line-height: 1.5; }
+
+  /* Layout */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 220px; background: var(--bg-dark); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; }
+  .sidebar-brand { padding: 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-brand h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+  .sidebar-brand p { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 2px; }
+  .sidebar-nav { padding: 8px; flex: 1; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13.5px; font-weight: 500; color: rgba(255,255,255,0.6); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+  .nav-item.active { background: var(--accent); color: #fff; }
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: var(--danger); color: #fff; font-size: 10px; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+
+  .main { flex: 1; overflow-y: auto; }
+  .main-header { padding: 24px 32px 0; }
+  .main-header h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .main-header p { color: var(--fg-muted); font-size: 13.5px; margin-top: 2px; }
+  .main-content { padding: 20px 32px 32px; }
+
+  /* Cards */
+  .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .card-header h3 { font-size: 14px; font-weight: 600; }
+
+  /* Dashboard Grid */
+  .dash-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .stat-card .stat-label { font-size: 12px; color: var(--fg-muted); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-card .stat-value { font-size: 28px; font-weight: 700; margin-top: 4px; letter-spacing: -1px; }
+  .stat-card .stat-sub { font-size: 12px; color: var(--fg-light); margin-top: 4px; }
+  .stat-card.accent { border-left: 3px solid var(--accent); }
+  .stat-card.warning { border-left: 3px solid var(--warning); }
+  .stat-card.danger { border-left: 3px solid var(--danger); }
+  .stat-card.info { border-left: 3px solid var(--info); }
+
+  .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 12px; font-weight: 600; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--fg-muted); border-bottom: 2px solid var(--border); }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border-light); vertical-align: top; }
+  tr:hover td { background: var(--bg); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: var(--accent-light); color: var(--accent); }
+  .badge-yellow { background: var(--warning-light); color: var(--warning); }
+  .badge-red { background: var(--danger-light); color: var(--danger); }
+  .badge-blue { background: var(--info-light); color: var(--info); }
+
+  /* Warnings */
+  .warning-list { display: flex; flex-direction: column; gap: 8px; }
+  .warning-item { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border-radius: 8px; font-size: 13px; }
+  .warning-item.critical { background: var(--danger-light); }
+  .warning-item.warn { background: var(--warning-light); }
+  .warning-item.info { background: var(--info-light); }
+  .warning-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .warning-text strong { display: block; margin-bottom: 2px; }
+
+  /* Chat */
+  .chat-container { display: flex; flex-direction: column; height: calc(100vh - 80px); }
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; }
+  .chat-msg { display: flex; gap: 12px; margin-bottom: 16px; }
+  .chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .chat-avatar.bot { background: var(--accent-light); }
+  .chat-avatar.user { background: var(--info-light); }
+  .chat-bubble { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 13.5px; line-height: 1.6; }
+  .chat-bubble.bot { background: var(--bg-card); border: 1px solid var(--border); }
+  .chat-bubble.user { background: var(--accent); color: #fff; }
+  .chat-bubble strong { font-weight: 600; }
+  .chat-input-area { display: flex; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .chat-input { flex: 1; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; font-family: inherit; background: var(--bg-card); outline: none; transition: border-color 0.15s; }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-send { padding: 12px 20px; background: var(--accent); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+  .chat-send:hover { background: var(--accent-hover); }
+  .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Buttons */
+  .btn { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-outline { background: none; border: 1px solid var(--border); color: var(--fg); }
+  .btn-outline:hover { background: var(--bg); }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; }
+  .modal { background: var(--bg-card); border-radius: 12px; padding: 24px; width: 480px; max-height: 80vh; overflow-y: auto; box-shadow: var(--shadow-lg); }
+  .modal h3 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--fg-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; background: var(--bg); outline: none; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group textarea { resize: vertical; min-height: 60px; }
+  .form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .sidebar { width: 60px; }
+    .sidebar-brand p, .nav-item span:not(.nav-icon) { display: none; }
+    .dash-stats { grid-template-columns: repeat(2, 1fr); }
+    .dash-grid { grid-template-columns: 1fr; }
+    .main-header, .main-content { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <h1>HomeLog</h1>
+      <p>Your House Brain</p>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-tab="dashboard"><span class="nav-icon">&#9751;</span><span>Dashboard</span></button>
+      <button class="nav-item" data-tab="inventory"><span class="nav-icon">&#9744;</span><span>Inventory</span></button>
+      <button class="nav-item" data-tab="repairs"><span class="nav-icon">&#9874;</span><span>Repairs</span></button>
+      <button class="nav-item" data-tab="maintenance"><span class="nav-icon">&#9200;</span><span>Maintenance</span><span class="nav-badge" id="maintBadge"></span></button>
+      <button class="nav-item" data-tab="contractors"><span class="nav-icon">&#9742;</span><span>Contractors</span></button>
+      <button class="nav-item" data-tab="appliances"><span class="nav-icon">&#9881;</span><span>Appliances</span></button>
+      <button class="nav-item" data-tab="expenses"><span class="nav-icon">&#36;</span><span>Expenses</span></button>
+      <button class="nav-item" data-tab="chat"><span class="nav-icon">&#9993;</span><span>Chat</span></button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="main" id="mainContent">
+    <!-- Populated by JS -->
+  </main>
+</div>
+
+<!-- Modal Container -->
+<div id="modalContainer"></div>
+
+<script>
+const API = '';
+let state = { inventory: [], repairs: [], maintenance: [], contractors: [], appliances: [], expenses: [], warnings: [] };
+
+// ── API ──
+async function api(path, method = 'GET', body = null) {
+  const opts = { method, headers: { 'Content-Type': 'application/json' } };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(`${API}${path}`, opts);
+  return res.json();
+}
+
+// ── Navigation ──
+const navItems = document.querySelectorAll('.nav-item');
+navItems.forEach(item => {
+  item.addEventListener('click', () => {
+    navItems.forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+    renderTab(item.dataset.tab);
+  });
+});
+
+function renderTab(tab) {
+  const main = document.getElementById('mainContent');
+  switch (tab) {
+    case 'dashboard': renderDashboard(main); break;
+    case 'inventory': renderTable(main, 'inventory', state.inventory, inventoryCols); break;
+    case 'repairs': renderTable(main, 'repairs', state.repairs, repairCols); break;
+    case 'maintenance': renderMaintenance(main); break;
+    case 'contractors': renderTable(main, 'contractors', state.contractors, contractorCols); break;
+    case 'appliances': renderTable(main, 'appliances', state.appliances, applianceCols); break;
+    case 'expenses': renderExpenses(main); break;
+    case 'chat': renderChat(main); break;
+  }
+}
+
+// ── Dashboard ──
+function renderDashboard(el) {
+  const overdue = state.maintenance.filter(m => m.overdue).length;
+  const expiringWarranties = state.appliances.filter(a => {
+    const days = daysUntil(a.warrantyExpiry);
+    return days >= 0 && days <= 90;
+  }).length;
+  const thisMonth = new Date().getMonth();
+  const thisYear = new Date().getFullYear();
+  const monthlySpend = state.expenses.filter(e => {
+    const d = new Date(e.date);
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+  }).reduce((s, e) => s + e.amount, 0);
+  const criticalWarnings = state.warnings.filter(w => w.severity === 'critical').length;
+
+  el.innerHTML = `
+    <div class="main-header"><h2>Dashboard</h2><p>Your home at a glance — ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p></div>
+    <div class="main-content">
+      <div class="dash-stats">
+        <div class="stat-card danger">
+          <div class="stat-label">Overdue Maintenance</div>
+          <div class="stat-value">${overdue}</div>
+          <div class="stat-sub">${overdue > 0 ? 'Needs attention' : 'All caught up!'}</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Expiring Warranties</div>
+          <div class="stat-value">${expiringWarranties}</div>
+          <div class="stat-sub">Within 90 days</div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-label">This Month's Spending</div>
+          <div class="stat-value">$${monthlySpend.toLocaleString()}</div>
+          <div class="stat-sub">All home categories</div>
+        </div>
+        <div class="stat-card accent">
+          <div class="stat-label">Total Appliances</div>
+          <div class="stat-value">${state.appliances.length}</div>
+          <div class="stat-sub">${state.appliances.filter(a => new Date(a.warrantyExpiry) > new Date()).length} under warranty</div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-header"><h3>Recent Repairs</h3></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Date</th><th>Item</th><th>Issue</th><th>Contractor</th><th>Cost</th></tr></thead>
+            <tbody>${state.repairs.slice(-5).reverse().map(r => `<tr>
+              <td>${r.date}</td><td>${r.itemOrArea}</td><td style="max-width:250px">${r.issue}</td>
+              <td>${r.contractorName}</td><td><strong>$${r.cost.toLocaleString()}</strong></td>
+            </tr>`).join('')}</tbody>
+          </table></div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="card">
+            <div class="card-header"><h3>Warnings (${state.warnings.length})</h3></div>
+            <div class="warning-list">${state.warnings.slice(0, 5).map(w => `
+              <div class="warning-item ${w.severity === 'critical' ? 'critical' : w.severity === 'warning' ? 'warn' : 'info'}">
+                <span class="warning-icon">${w.severity === 'critical' ? '&#9888;' : w.severity === 'warning' ? '&#9888;' : '&#8505;'}</span>
+                <div class="warning-text"><strong>${w.title}</strong>${w.message.substring(0, 100)}...</div>
+              </div>
+            `).join('')}</div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>Quick Actions</h3></div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <button class="btn btn-primary" onclick="navItems[7].click()" style="text-align:left">Ask HomeLog a question</button>
+              <button class="btn btn-outline" onclick="navItems[3].click()">View maintenance calendar</button>
+              <button class="btn btn-outline" onclick="navItems[5].click()">Check appliance warranties</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Maintenance ──
+function renderMaintenance(el) {
+  const overdue = state.maintenance.filter(m => m.overdue);
+  const upcoming = state.maintenance.filter(m => !m.overdue);
+  el.innerHTML = `
+    <div class="main-header"><h2>Maintenance Calendar</h2><p>${overdue.length} overdue, ${upcoming.length} scheduled</p></div>
+    <div class="main-content">
+      ${overdue.length > 0 ? `<div class="card" style="margin-bottom:16px;border-left:3px solid var(--danger)">
+        <div class="card-header"><h3 style="color:var(--danger)">Overdue (${overdue.length})</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Task</th><th>Due</th><th>Recurrence</th><th>Est. Cost</th><th>Action</th></tr></thead>
+          <tbody>${overdue.map(m => `<tr style="background:var(--danger-light)">
+            <td><strong>${m.task}</strong><br><span style="color:var(--fg-muted);font-size:11px">${m.notes}</span></td>
+            <td><span class="badge badge-red">${m.nextDue}</span></td>
+            <td>${m.recurrence}</td>
+            <td>$${m.estimatedCost}</td>
+            <td><button class="btn btn-primary btn-sm" onclick="completeTask('${m.id}')">Done</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>` : ''}
+      <div class="card">
+        <div class="card-header"><h3>Scheduled</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Task</th><th>Next Due</th><th>Recurrence</th><th>Category</th><th>Est. Cost</th><th>Action</th></tr></thead>
+          <tbody>${upcoming.map(m => `<tr>
+            <td><strong>${m.task}</strong><br><span style="color:var(--fg-muted);font-size:11px">${m.notes}</span></td>
+            <td>${m.nextDue}</td>
+            <td><span class="badge badge-blue">${m.recurrence}</span></td>
+            <td>${m.category}</td>
+            <td>$${m.estimatedCost}</td>
+            <td><button class="btn btn-outline btn-sm" onclick="completeTask('${m.id}')">Done</button></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+async function completeTask(id) {
+  await api('/api/maintenance', 'POST', { action: 'complete', id });
+  await loadAll();
+  renderTab('maintenance');
+}
+
+// ── Expenses ──
+function renderExpenses(el) {
+  const byCategory = {};
+  state.expenses.forEach(e => { byCategory[e.category] = (byCategory[e.category] || 0) + e.amount; });
+  const total = state.expenses.reduce((s, e) => s + e.amount, 0);
+  const sorted = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+
+  el.innerHTML = `
+    <div class="main-header"><h2>Expenses</h2><p>Total tracked: $${total.toLocaleString()}</p></div>
+    <div class="main-content">
+      <div style="display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+        ${sorted.map(([cat, amt]) => `<div class="stat-card" style="flex:1;min-width:140px">
+          <div class="stat-label">${cat}</div>
+          <div class="stat-value" style="font-size:20px">$${amt.toLocaleString()}</div>
+        </div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="card-header"><h3>All Expenses</h3><button class="btn btn-primary btn-sm" onclick="showExpenseModal()">+ Add Expense</button></div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+          <tbody>${state.expenses.sort((a, b) => b.date.localeCompare(a.date)).map(e => `<tr>
+            <td>${e.date}</td>
+            <td><span class="badge badge-${e.category === 'repair' ? 'red' : e.category === 'maintenance' ? 'yellow' : e.category === 'improvement' ? 'green' : 'blue'}">${e.category}</span></td>
+            <td>${e.description}</td>
+            <td><strong>$${e.amount.toLocaleString()}</strong></td>
+          </tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+function showExpenseModal() {
+  const cats = ['maintenance', 'improvement', 'repair', 'utilities', 'insurance', 'other'];
+  showModal('Add Expense', `
+    <div class="form-group"><label>Date</label><input type="date" id="exp-date" value="${new Date().toISOString().split('T')[0]}"></div>
+    <div class="form-group"><label>Category</label><select id="exp-cat">${cats.map(c => `<option value="${c}">${c}</option>`).join('')}</select></div>
+    <div class="form-group"><label>Amount ($)</label><input type="number" id="exp-amount" step="0.01"></div>
+    <div class="form-group"><label>Description</label><textarea id="exp-desc"></textarea></div>
+  `, async () => {
+    await api('/api/expenses', 'POST', {
+      date: document.getElementById('exp-date').value,
+      category: document.getElementById('exp-cat').value,
+      amount: parseFloat(document.getElementById('exp-amount').value),
+      description: document.getElementById('exp-desc').value
+    });
+    await loadAll();
+    renderTab('expenses');
+  });
+}
+
+// ── Generic Table ──
+const inventoryCols = [
+  { key: 'room', label: 'Room' },
+  { key: 'itemName', label: 'Item' },
+  { key: 'category', label: 'Category' },
+  { key: 'purchaseDate', label: 'Purchased' },
+  { key: 'warrantyExpiry', label: 'Warranty Until' },
+  { key: 'replacementCost', label: 'Replacement', fmt: v => `$${v.toLocaleString()}` },
+];
+const repairCols = [
+  { key: 'date', label: 'Date' },
+  { key: 'itemOrArea', label: 'Item/Area' },
+  { key: 'issue', label: 'Issue' },
+  { key: 'contractorName', label: 'Contractor' },
+  { key: 'cost', label: 'Cost', fmt: v => `$${v.toLocaleString()}` },
+  { key: 'warrantyCovered', label: 'Warranty', fmt: v => v ? '<span class="badge badge-green">Yes</span>' : '<span class="badge badge-yellow">No</span>' },
+];
+const contractorCols = [
+  { key: 'name', label: 'Name' },
+  { key: 'company', label: 'Company' },
+  { key: 'specialty', label: 'Specialty' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'rating', label: 'Rating', fmt: v => `${v}/5` },
+  { key: 'lastUsed', label: 'Last Used' },
+];
+const applianceCols = [
+  { key: 'name', label: 'Appliance' },
+  { key: 'make', label: 'Make' },
+  { key: 'model', label: 'Model' },
+  { key: 'room', label: 'Room' },
+  { key: 'purchaseDate', label: 'Purchased' },
+  { key: 'warrantyExpiry', label: 'Warranty Until', fmt: (v, row) => {
+    const days = daysUntil(v);
+    if (days < 0) return `<span class="badge badge-red">Expired</span>`;
+    if (days <= 90) return `<span class="badge badge-yellow">${v}</span>`;
+    return `<span class="badge badge-green">${v}</span>`;
+  }},
+  { key: 'replacementCost', label: 'Replacement', fmt: v => `$${v.toLocaleString()}` },
+];
+
+function renderTable(el, type, data, cols) {
+  const titles = { inventory: 'Home Inventory', repairs: 'Repair History', contractors: 'Contractors', appliances: 'Appliance Registry' };
+  const descs = { inventory: `${data.length} items across all rooms`, repairs: `${data.length} repairs logged`, contractors: `${data.length} contractors on file`, appliances: `${data.length} appliances tracked` };
+
+  el.innerHTML = `
+    <div class="main-header"><h2>${titles[type]}</h2><p>${descs[type]}</p></div>
+    <div class="main-content">
+      <div class="card">
+        <div class="card-header"><h3>All ${titles[type]}</h3></div>
+        <div class="table-wrap"><table>
+          <thead><tr>${cols.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>
+          <tbody>${data.map(row => `<tr>${cols.map(c => {
+            const val = row[c.key];
+            if (c.fmt) return `<td>${c.fmt(val, row)}</td>`;
+            if (c.key === 'issue' || c.key === 'specialty') return `<td style="max-width:250px">${val}</td>`;
+            return `<td>${val}</td>`;
+          }).join('')}</tr>`).join('')}</tbody>
+        </table></div>
+      </div>
+    </div>`;
+}
+
+// ── Chat ──
+let chatHistory = [];
+
+function renderChat(el) {
+  el.innerHTML = `
+    <div class="main-header"><h2>Chat with HomeLog</h2><p>Your house brain — ask anything about your home</p></div>
+    <div class="main-content">
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          ${chatHistory.length === 0 ? `<div class="chat-msg">
+            <div class="chat-avatar bot">&#9751;</div>
+            <div class="chat-bubble bot">
+              Hey! I'm HomeLog — your house brain. I've been tracking this home since 2019. I know every repair, every appliance serial number, every contractor who's been here. Try asking me about:<br><br>
+              <strong>"What warranties are expiring?"</strong><br>
+              <strong>"Who should I call for plumbing?"</strong><br>
+              <strong>"What maintenance is overdue?"</strong><br>
+              <strong>"How much have we spent on repairs?"</strong><br>
+              <strong>"Tell me about the HVAC system"</strong>
+            </div>
+          </div>` : chatHistory.map(m => `
+            <div class="chat-msg">
+              <div class="chat-avatar ${m.role}">${m.role === 'bot' ? '&#9751;' : '&#9786;'}</div>
+              <div class="chat-bubble ${m.role}">${m.text}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="chat-input-area">
+          <input class="chat-input" id="chatInput" placeholder="Ask about your home..." autocomplete="off">
+          <button class="chat-send" id="chatSend" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+    </div>`;
+
+  const input = document.getElementById('chatInput');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') sendChat(); });
+  input.focus();
+  scrollChat();
+}
+
+function scrollChat() {
+  setTimeout(() => {
+    const el = document.getElementById('chatMessages');
+    if (el) el.scrollTop = el.scrollHeight;
+  }, 50);
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const send = document.getElementById('chatSend');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  chatHistory.push({ role: 'user', text: msg });
+  input.value = '';
+  send.disabled = true;
+
+  // Show typing
+  chatHistory.push({ role: 'bot', text: '...' });
+  renderChat(document.getElementById('mainContent'));
+
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: msg })
+    });
+
+    // Remove typing indicator
+    chatHistory.pop();
+
+    if (res.headers.get('Content-Type')?.includes('text/event-stream')) {
+      // SSE streaming
+      chatHistory.push({ role: 'bot', text: '' });
+      renderChat(document.getElementById('mainContent'));
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (line.startsWith('data: ') && line !== 'data: [DONE]') {
+            try {
+              const json = JSON.parse(line.slice(6));
+              if (json.content) {
+                chatHistory[chatHistory.length - 1].text += json.content;
+                const bubbles = document.querySelectorAll('.chat-bubble.bot');
+                if (bubbles.length) bubbles[bubbles.length - 1].innerHTML = formatChat(chatHistory[chatHistory.length - 1].text);
+                scrollChat();
+              }
+            } catch {}
+          }
+        }
+      }
+    } else {
+      // JSON response
+      const data = await res.json();
+      chatHistory.push({ role: 'bot', text: data.reply || data.error || 'Something went wrong.' });
+    }
+  } catch (err) {
+    chatHistory.pop();
+    chatHistory.push({ role: 'bot', text: 'Connection error. Make sure the API server is running.' });
+  }
+
+  send.disabled = false;
+  renderChat(document.getElementById('mainContent'));
+}
+
+function formatChat(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+}
+
+// ── Modal ──
+function showModal(title, bodyHtml, onSave) {
+  const container = document.getElementById('modalContainer');
+  container.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal">
+        <h3>${title}</h3>
+        ${bodyHtml}
+        <div class="form-actions">
+          <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="modalSave">Save</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modalSave').addEventListener('click', async () => {
+    await onSave();
+    closeModal();
+  });
+}
+function closeModal() { document.getElementById('modalContainer').innerHTML = ''; }
+
+// ── Utils ──
+function daysUntil(dateStr) {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
+}
+
+// ── Init ──
+async function loadAll() {
+  const [inventory, repairs, maintenance, contractors, appliances, expenses, warnings] = await Promise.all([
+    api('/api/inventory'), api('/api/repairs'), api('/api/maintenance'),
+    api('/api/contractors'), api('/api/appliances'), api('/api/expenses'), api('/api/warnings')
+  ]);
+  state = { inventory, repairs, maintenance, contractors, appliances, expenses, warnings };
+
+  const overdue = maintenance.filter(m => m.overdue).length;
+  const badge = document.getElementById('maintBadge');
+  if (overdue > 0) { badge.textContent = overdue; badge.style.display = ''; }
+  else badge.style.display = 'none';
+}
+
+loadAll().then(() => renderTab('dashboard'));
+</script>
+</body>
+</html>
