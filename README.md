@@ -17,7 +17,7 @@ A repo-native AI companion for smart home management. It learns your routines, r
 ## Deploy
 
 ```bash
-git clone https://github.com/Lucineer/home-ai.git
+git clone ./.git
 cd home-ai
 npm install
 npx wrangler dev
@@ -29,3 +29,7 @@ npx wrangler dev
 📝 Roadmap: Hardware integrations (Home Assistant, Zigbee, Z-Wave), voice control, predictive automation.
 
 Author: Superinstance
+
+## License
+
+MIT — Built with ❤️ by [Superinstance](https://github.com/superinstance) & [Lucineer](https://github.com/Lucineer) (DiGennaro et al.)
