@@ -1,9 +1,8 @@
+account_id = "049ff5e84ecf636b53b162cbb580aae6"
 name = "home-ai"
-main = "src/index.ts"
-compatibility_date = "2024-12-01"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
 
-[assets]
-directory = "./public"
-
-[vars]
-DEEPSEEK_API_KEY = ""
+[[kv_namespaces]]
+binding = "STATE"
+id = "a484b64a11634805bea86bb8027fa47f"
