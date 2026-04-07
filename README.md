@@ -1,58 +1,51 @@
-# Home AI — Contextual Home Agent
+# Home AI — Your Home Remembers
 
-You don't need another disconnected smart home interface.
+You forget when the plumber said to wait before using the shower, or what your niece wanted from the store last month. This keeps track. Ask about anything you’ve told it before. All memory is stored only in your own Cloudflare account.
 
-> A Cocapn vessel for home management and organization. It accumulates context over time.
-
----
-
-## Purpose
-Many home automation tools isolate sessions or lock you into proprietary clouds. This agent provides a single, persistent interface for your home that runs on infrastructure you control. It is designed to remember and build upon previous conversations.
-
-## 🧪 Live Reference
-A stateless demo is available: [home-ai.casey-digennaro.workers.dev](https://home-ai.casey-digennaro.workers.dev)
-
-When you deploy your own instance, all context is stored permanently within your Cloudflare Workers KV namespace.
+**Live example:** [home-ai.casey-digennaro.workers.dev](https://home-ai.casey-digennaro.workers.dev)
 
 ---
 
-## How This Works
-- **No Central Service**: The agent logic and state reside entirely within your Cloudflare Worker and its associated KV storage. There is no external data pipeline.
-- **Fork-First**: You copy this repository. You own and operate that copy. Updates are optional and under your control.
-- **Fleet Native**: Implements the standard Cocapn Fleet protocol, allowing future interoperation with other agents.
-- **Zero Dependencies**: The core agent is a single, self-contained source file with no external npm dependencies.
-
-## Capabilities
-- **Bring Your Own LLM**: Configured to work with OpenAI-compatible endpoints (e.g., DeepSeek, Moonshot, OpenRouter). Swap providers without code changes.
-- **Persistent Context**: Maintains a history of conversations, tasks, and home notes across sessions in Cloudflare KV.
-- **Local Execution**: Your API keys and conversation history are processed within your Worker's isolated runtime.
-- **Standard Endpoints**: Exposes the standard `/v1/chat/completions` and Fleet discovery routes.
-
-**One Limitation**: Agent memory is bound by Cloudflare Workers KV limits (1MB per key, 1GB total per namespace). Very long, unstructured histories may require manual pruning.
+## Why This Exists
+Commercial assistants keep your household memories on their servers. This gives you a private alternative. It is simple, self-hosted, and yours.
 
 ---
 
-## 🚀 Deploy
-1.  Fork this repository.
-2.  Deploy it to Cloudflare Workers.
-3.  Add your LLM API key as a `LLM_API_KEY` secret in the Cloudflare dashboard.
-4.  Visit your worker's URL. The `/setup` route provides guidance.
+## Quick Start
 
-## 🔧 Configuration
-Edit `src/index.ts` to adjust the system prompt and default parameters. The agent's behavior is defined there.
+1.  **Fork** this repository.
+2.  **Deploy** it to Cloudflare Workers with one click from your forked repo.
+3.  **Add** one LLM API key as a Cloudflare Secret. It works with OpenAI-compatible providers like DeepSeek, Moonshot, or DeepInfra.
+4.  **Visit** your worker's `/setup` route for final setup steps.
 
----
-
-## Development
-Improvements and adaptations are welcome. This is an open vessel within the Cocapn Fleet.
-
-## 📄 License
-MIT License.
-
-Superinstance & Lucineer (DiGennaro et al.).
+Your instance is now running. All memory persists in your private Cloudflare KV store.
 
 ---
 
-<div>
-  <a href="https://the-fleet.casey-digennaro.workers.dev">The Fleet</a> • <a href="https://cocapn.ai">Cocapn</a>
-</div>
+## What This Is
+A single-file Cloudflare Worker with zero dependencies. It stores your full conversation history and connects to the LLM provider you choose. It follows the Cocapn Fleet protocol so it can work with other tools you run.
+
+**You get:**
+- Memory that lasts across all conversations.
+- The ability to change your LLM provider anytime by editing a secret.
+- A system that never sends your data or keys through any intermediary server.
+- A service that fits within Cloudflare's free tier for typical household use.
+
+**You control:**
+- The code. You forked it; no one can push updates or disable it.
+- The data. Everything stays in your Cloudflare KV namespace.
+- The endpoint. You point it to your chosen LLM API.
+
+---
+
+## A Real Limitation
+This uses Cloudflare KV for storage. On the free tier, KV is limited to 100,000 reads and 1,000 writes per day. For most homes, this is sufficient. If your household generates an unusually high volume of messages, you may need to monitor usage or upgrade to a paid Workers plan.
+
+---
+
+## Open Source
+MIT licensed. Fork, modify, and use it as you like.
+
+Superinstance and Lucineer (DiGennaro et al.).
+
+<div style="text-align:center;padding:16px;color:#64748b;font-size:.8rem"><a href="https://the-fleet.casey-digennaro.workers.dev" style="color:#64748b">The Fleet</a> &middot; <a href="https://cocapn.ai" style="color:#64748b">Cocapn</a></div>
